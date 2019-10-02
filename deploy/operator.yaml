@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buildly-service-discovery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: buildly-service-discovery
+  template:
+    metadata:
+      labels:
+        name: buildly-service-discovery
+    spec:
+      serviceAccountName: buildly-service-discovery
+      containers:
+        - name: buildly-service-discovery
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - buildly-service-discovery
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "buildly-service-discovery"
