@@ -27,6 +27,7 @@ const (
 	endpointNameAnnotation = "buildly.discovery.k8s.io/endpoint_name"
 	databaseLogicModuleTable = "gateway_logicmodule"
 
+	// TODO: Use a configuration struct to hold the database configuration
 	dbHost     = os.Getenv("DATABASE_HOST")
 	dbPort     = os.Getenv("DATABASE_PORT")
 	dbUser     = os.Getenv("DATABASE_USER")
