@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -17,21 +18,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	_ "github.com/lib/pq"
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 const (
 	// TODO: Add a description for the constants
 	serviceNameAnnotation  = "buildly.discovery.k8s.io/service_name"
 	endpointNameAnnotation = "buildly.discovery.k8s.io/endpoint_name"
-)
+	databaseLogicModuleTable = "gateway_logicmodule"
 
-const (
-	dbHost     = "35.189.112.224"
-	dbPort     = 5432
-	dbUser     = "ufPFlCnT_no"
-	dbPassword = "qexh54tN8O9nskqJh3lCT2xF9RQShu64xEQZ97g1dFU"
-	dbName     = "db-00be5b70-ed34-436b-bd3b-e0f5341dfe48"
+	dbHost     = os.Getenv("DATABASE_HOST")
+	dbPort     = os.Getenv("DATABASE_PORT")
+	dbUser     = os.Getenv("DATABASE_USER")
+	dbPassword = os.Getenv("DATABASE_PASSWORD")
+	dbName     = os.Getenv("DATABASE_NAME")
 )
 
 var log = logf.Log.WithName("controller_buildly_discovery")
@@ -135,14 +135,12 @@ func (r *ReconcileService) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	// Generate UUID and endpoint of service
-	moduleUUID := fmt.Sprintf("%s", uuid.NewV4())
+	moduleUUID := uuid.New().String()
 	servicePort := instance.Spec.Ports[0].Port
 	endpoint := fmt.Sprintf("http://%s.%s:%d", instance.Name, instance.Namespace, servicePort)
 
 	// Create SQL statement to add service to Buildly instance database
-	sqlStatement := `
-	INSERT INTO gateway_logicmodule (module_uuid, name, endpoint, endpoint_name)
-	VALUES ($1, $2, $3, $4)`
+	sqlStatement := fmt.Sprintf("INSERT INTO %s (module_uuid, name, endpoint, endpoint_name) VALUES ($1, $2, $3, $4)", databaseLogicModuleTable)
 	_, err = db.Exec(sqlStatement, moduleUUID, serviceName, endpoint, endpointName)
 	if err != nil {
 		return reconcile.Result{}, err
